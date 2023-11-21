@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch.cuda.amp import autocast
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torchmetrics.detection import MeanAveragePrecision
@@ -35,7 +36,8 @@ class Trainer:
                     targ['boxes'] = d[1]['boxes'].to(self._device)
                     targ['labels'] = d[1]['labels'].to(self._device)
                     targets.append(targ)
-                loss_dict = self._model(imgs, targets)
+                with autocast():
+                    loss_dict = self._model(imgs, targets)
                 loss = sum(v for v in loss_dict.values())
 
                 iteration_loss = loss.cpu().detach().numpy()
