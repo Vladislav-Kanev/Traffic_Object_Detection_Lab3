@@ -49,7 +49,6 @@ class Trainer:
                 self._optimizer.step()
             print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}')
 
-
     @torch.inference_mode()
     def test(self):
         self._model.eval()
