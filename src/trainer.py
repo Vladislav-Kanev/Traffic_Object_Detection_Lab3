@@ -47,10 +47,11 @@ class Trainer:
                 self._optimizer.zero_grad()
                 loss.backward()
                 self._optimizer.step()
-            print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}')
+            val_loss = self._test()
+            print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}, val_loss {val_loss}')
 
     @torch.inference_mode()
-    def test(self):
+    def _test(self) -> float:
         self._model.eval()
 
         val_losses = []
@@ -65,8 +66,10 @@ class Trainer:
                 targets.append(targ)
 
             loss_dict = self._model(imgs, targets)
-            self._metric.update([loss_dict], targets)
             loss = sum(v for v in loss_dict.values()).cpu().detach().numpy()
             val_losses.append(loss)
+        return np.mean(val_losses)
 
-        print(f'Validation: val_loss {np.mean(val_losses)} mAP {self.metric.compute()}')
+    def test(self) -> None:
+        val_loss = self._test()
+        print(f'Validation: val_loss {val_loss}')
