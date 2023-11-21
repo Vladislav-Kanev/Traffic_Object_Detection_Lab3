@@ -4,6 +4,7 @@ from torch.cuda.amp import autocast
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torchmetrics.detection import MeanAveragePrecision
+from tqdm import tqdm
 
 from src.model import FasterRCNN
 
@@ -27,7 +28,7 @@ class Trainer:
         self._model.train()
         for epoch in range(self._num_epochs):
             epoch_loss = []
-            for data in self._train_dataloader:
+            for data in tqdm(self._train_dataloader, desc=f'Epoch {epoch}', total=len(self._train_dataloader)):
                 imgs = []
                 targets = []
                 for d in data:
@@ -46,8 +47,7 @@ class Trainer:
                 self._optimizer.zero_grad()
                 loss.backward()
                 self._optimizer.step()
-                print(f'Iteration: train_loss: {iteration_loss}')
-            print(f'Epoch {epoch}: train_loss: {np.mean(epoch_loss)}')
+            print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}')
 
     @torch.inference_mode()
     def test(self):
