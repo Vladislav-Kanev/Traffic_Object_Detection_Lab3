@@ -11,7 +11,7 @@ from src.model import FasterRCNN
 
 class Trainer:
     def __init__(self, model: FasterRCNN, train_dataloader: DataLoader, test_dataloader: DataLoader,
-                 optimizer: Optimizer, num_epochs: int, device: torch.device) -> None:
+                 optimizer: Optimizer, num_epochs: int, device: torch.device, autocast: bool) -> None:
         self._model = model
         self._train_dataloader = train_dataloader
         self._test_dataloader = test_dataloader
@@ -19,6 +19,7 @@ class Trainer:
         self._num_epochs = num_epochs
         self._device = device
         self._metric = MeanAveragePrecision(iou_type="bbox")
+        self._autocast = autocast
 
     @property
     def model(self) -> FasterRCNN:
@@ -29,15 +30,15 @@ class Trainer:
         for epoch in range(self._num_epochs):
             epoch_loss = []
             for data in tqdm(self._train_dataloader, desc=f'Epoch {epoch}', total=len(self._train_dataloader)):
-                imgs = []
-                targets = []
-                for d in data:
-                    imgs.append(d[0].to(self._device))
-                    targ = {}
-                    targ['boxes'] = d[1]['boxes'].to(self._device)
-                    targ['labels'] = d[1]['labels'].to(self._device)
-                    targets.append(targ)
-                with autocast():
+                with autocast(self._autocast):
+                    imgs = []
+                    targets = []
+                    for d in data:
+                        imgs.append(d[0].to(self._device))
+                        targ = {}
+                        targ['boxes'] = d[1]['boxes'].to(self._device)
+                        targ['labels'] = d[1]['labels'].to(self._device)
+                        targets.append(targ)
                     loss_dict = self._model(imgs, targets)
                 loss = sum(v for v in loss_dict.values())
 
@@ -47,7 +48,7 @@ class Trainer:
                 self._optimizer.zero_grad()
                 loss.backward()
                 self._optimizer.step()
-            val_loss = self._test()
+            val_loss = None #self._test()
             print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}, val_loss {val_loss}')
 
     @torch.inference_mode()
