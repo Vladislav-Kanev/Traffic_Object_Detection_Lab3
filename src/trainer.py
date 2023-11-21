@@ -44,7 +44,7 @@ class Trainer:
                 self._optimizer.zero_grad()
                 loss.backward()
                 self._optimizer.step()
-
+                print(f'Iteration: train_loss: {iteration_loss}')
             print(f'Epoch {epoch}: train_loss: {np.mean(epoch_loss)}')
 
     @torch.inference_mode()
