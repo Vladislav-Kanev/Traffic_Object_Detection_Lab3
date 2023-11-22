@@ -1,7 +1,8 @@
 import numpy as np
 import torch
 from torch.cuda.amp import autocast
-from torch.optim import LRScheduler, Optimizer
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 from torchmetrics.detection import MeanAveragePrecision
 from tqdm import tqdm
