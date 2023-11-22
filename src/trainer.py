@@ -26,8 +26,9 @@ class Trainer:
         return self._model
 
     def train(self) -> None:
-        self._model.train()
+        
         for epoch in range(self._num_epochs):
+            self._model.train()
             epoch_loss = []
             for data in tqdm(self._train_dataloader, desc=f'Epoch {epoch}', total=len(self._train_dataloader)):
                 with autocast(self._autocast):
@@ -48,14 +49,12 @@ class Trainer:
                 self._optimizer.zero_grad()
                 loss.backward()
                 self._optimizer.step()
-            val_loss = None #self._test()
-            print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}, val_loss {val_loss}')
+            val_map = self._test()
+            print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}, mAP {val_map}')
 
     @torch.inference_mode()
     def _test(self) -> float:
         self._model.eval()
-
-        val_losses = []
         for data in self._test_dataloader:
             imgs = []
             targets = []
@@ -66,11 +65,10 @@ class Trainer:
                 targ['labels'] = d[1]['labels'].to(self._device)
                 targets.append(targ)
 
-            loss_dict = self._model(imgs, targets)
-            loss = sum(v for v in loss_dict.values()).cpu().detach().numpy()
-            val_losses.append(loss)
-        return np.mean(val_losses)
+            loss_list = self._model(imgs, targets)
+            self._metric.update(loss_list, targets)
+        return self._metric.compute()
 
     def test(self) -> None:
-        val_loss = self._test()
-        print(f'Validation: val_loss {val_loss}')
+        val_map = self._test()
+        print(f'Validation: mAP {val_map}')
