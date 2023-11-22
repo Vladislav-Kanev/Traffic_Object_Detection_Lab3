@@ -16,14 +16,14 @@ def prepare_result(results: SubmissionType, result_path: str, index_map : list[i
                 {
                     'id': global_id,
                     'image_id': image_id,
-                    'category_id': category_id,
-                    'bbox': bbox,
-                    'score': score
+                    'category_id': category_id.cpu.item(),
+                    'bbox': bbox.cpu.tolist(),
+                    'score': score.cpu.item()
                 }
             )
             global_id += 1
     submission_results_pd = pd.DataFrame(submission_result)
 
     with open(result_path, mode='w') as file_descr:
-        submission_results_pd.to_csv(file_descr)
+        submission_results_pd.to_csv(file_descr, index=False)
     print(f'Submission file is saved as {result_path}', flush=True)
