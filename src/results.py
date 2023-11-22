@@ -7,7 +7,7 @@ from src.trainer import SubmissionType
 def prepare_result(results: SubmissionType, result_path: str, index_map : list[int]) -> None:
     submission_result = []
     global_id = 0
-    for result_id, sample_result in enumerate(tqdm(results), desc=f'Processing'):
+    for result_id, sample_result in enumerate(tqdm(results, desc=f'Processing')):
         image_id = index_map[result_id]
         
         for bbox, category_id, score in zip(sample_result['boxes'], sample_result['labels'],
