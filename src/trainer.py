@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 import torch
 from torch.cuda.amp import autocast
@@ -9,14 +11,18 @@ from tqdm import tqdm
 
 from src.model import FasterRCNN
 
+SubmissionType = list[dict[str, Union[list[int, int, float, float], float, int]]]
 
 class Trainer:
-    def __init__(self, model: FasterRCNN, train_dataloader: DataLoader, test_dataloader: DataLoader,
+    def __init__(self,
+                 model: FasterRCNN,
+                 train_dataloader: DataLoader, test_dataloader: DataLoader, val_dataloader: DataLoader,
                  optimizer: Optimizer, scheduler: LRScheduler, num_epochs: int, device: torch.device,
                  autocast: bool) -> None:
         self._model = model
         self._train_dataloader = train_dataloader
         self._test_dataloader = test_dataloader
+        self._val_dataloader = val_dataloader
         self._optimizer = optimizer
         self._scheduler = scheduler
         self._num_epochs = num_epochs
@@ -35,14 +41,7 @@ class Trainer:
             epoch_loss = []
             for data in tqdm(self._train_dataloader, desc=f'Epoch {epoch}', total=len(self._train_dataloader)):
                 with autocast(self._autocast):
-                    imgs = []
-                    targets = []
-                    for d in data:
-                        imgs.append(d[0].to(self._device))
-                        targ = {}
-                        targ['boxes'] = d[1]['boxes'].to(self._device)
-                        targ['labels'] = d[1]['labels'].to(self._device)
-                        targets.append(targ)
+                    imgs, targets = self._prepare_batch(data)
                     loss_dict = self._model(imgs, targets)
                 loss = sum(v for v in loss_dict.values())
 
@@ -60,15 +59,7 @@ class Trainer:
     def _test(self) -> float:
         self._model.eval()
         for data in self._test_dataloader:
-            imgs = []
-            targets = []
-            for d in data:
-                imgs.append(d[0].to(self._device))
-                targ = {}
-                targ['boxes'] = d[1]['boxes'].to(self._device)
-                targ['labels'] = d[1]['labels'].to(self._device)
-                targets.append(targ)
-
+            imgs, targets = self._prepare_batch(data)
             loss_list = self._model(imgs, targets)
             self._metric.update(loss_list, targets)
         return self._metric.compute()
@@ -76,3 +67,25 @@ class Trainer:
     def test(self) -> None:
         val_map = self._test()
         print(f'Validation: mAP {val_map}')
+
+    def _prepare_batch(self, data: list[list[torch.Tensor]]
+    ) -> tuple[list[str, torch.Tensor], list[dict[str, torch.Tensor]]]:
+        imgs = []
+        targets = []
+        for d in data:
+            imgs.append(d[0].to(self._device))
+            targ = {}
+            targ['boxes'] = d[1]['boxes'].to(self._device)
+            targ['labels'] = d[1]['labels'].to(self._device)
+            targets.append(targ)
+        return imgs, targets
+
+    @torch.inference_mode()
+    def eval(self) -> SubmissionType:
+        self._model.eval()
+        for data in self._val_dataloader:
+            imgs = []
+            for d in data:
+                imgs.append(d[0].to(self._device))
+            result_list = self._model(imgs)
+        return result_list
