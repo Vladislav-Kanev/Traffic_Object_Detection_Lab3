@@ -88,5 +88,6 @@ class Trainer:
         result_list = []
         for data in tqdm(self._val_dataloader, desc='Validation'):
             for sample in data:
-                result_list.append(self._model(sample[0].to(self._device)))
+
+                result_list.append([self._model(sample[0].to(self._device))])
         return result_list
