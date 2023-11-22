@@ -53,7 +53,7 @@ class Trainer:
                 self._optimizer.step()
                 self._scheduler.step()
             map_value = self._test()
-            print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}, mAP {map_value}')
+            print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss): .2f}, mAP {map_value: .2f}')
 
     @torch.inference_mode()
     def _test(self) -> float:
@@ -68,7 +68,7 @@ class Trainer:
 
     def test(self) -> None:
         map_value = self._test()
-        print(f'Validation: mAP {map_value}')
+        print(f'Validation: mAP {map_value: .2f}')
 
     def _prepare_batch(self, data: list[list[torch.Tensor]]
     ) -> tuple[list[str, torch.Tensor], list[dict[str, torch.Tensor]]]:

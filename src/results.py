@@ -23,4 +23,5 @@ def prepare_result(results: SubmissionType, result_path: str, index_map : list[i
             )
             global_id += 1
     submission_results_pd = pd.DataFrame(submission_result)
-    submission_results_pd.to_csv(open(result_path, mode='w'))
+    with open(result_path, mode='w') as file_descr:
+        submission_results_pd.to_csv(file_descr)
