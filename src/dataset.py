@@ -24,6 +24,7 @@ def get_pandas_dataset(dataset_path: str, val: bool = False) -> tuple[pd.DataFra
         return data, classes
     
     data['file_name'] = [i['file_name'] for i in data_json['images']]
+    data['id'] = [i['id'] for i in data_json['images']]
     return data, {}
 
 
