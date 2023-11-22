@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch.cuda.amp import autocast
-from torch.optim import Optimizer
+from torch.optim import LRScheduler, Optimizer
 from torch.utils.data import DataLoader
 from torchmetrics.detection import MeanAveragePrecision
 from tqdm import tqdm
@@ -11,11 +11,13 @@ from src.model import FasterRCNN
 
 class Trainer:
     def __init__(self, model: FasterRCNN, train_dataloader: DataLoader, test_dataloader: DataLoader,
-                 optimizer: Optimizer, num_epochs: int, device: torch.device, autocast: bool) -> None:
+                 optimizer: Optimizer, scheduler: LRScheduler, num_epochs: int, device: torch.device,
+                 autocast: bool) -> None:
         self._model = model
         self._train_dataloader = train_dataloader
         self._test_dataloader = test_dataloader
         self._optimizer = optimizer
+        self._scheduler = scheduler
         self._num_epochs = num_epochs
         self._device = device
         self._metric = MeanAveragePrecision(iou_type="bbox")
@@ -49,6 +51,7 @@ class Trainer:
                 self._optimizer.zero_grad()
                 loss.backward()
                 self._optimizer.step()
+                self._scheduler.step()
             val_map = self._test()
             print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}, mAP {val_map}')
 
