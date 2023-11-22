@@ -85,9 +85,8 @@ class Trainer:
     @torch.inference_mode()
     def eval(self) -> SubmissionType:
         self._model.eval()
+        result_list = []
         for data in tqdm(self._val_dataloader, desc='Validation'):
-            imgs = []
-            for d in data:
-                imgs.append(d[0].to(self._device))
-            result_list = self._model(imgs)
+            for sample in data:
+                result_list.extend(self._model(sample[0].to(self._device)))
         return result_list
