@@ -47,8 +47,9 @@ class Trainer:
                 self._optimizer.zero_grad()
                 loss.backward()
                 self._optimizer.step()
-            val_loss = self._test()
-            print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}, val_loss {val_loss}')
+            # val_loss = self._test()
+            # self._metric.update(loss_dict, targets)
+            print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}')
 
     @torch.inference_mode()
     def _test(self) -> float:
@@ -65,10 +66,13 @@ class Trainer:
                 targ['labels'] = d[1]['labels'].to(self._device)
                 targets.append(targ)
 
-            loss_dict = self._model(imgs, targets)
-            loss = sum(v for v in loss_dict.values()).cpu().detach().numpy()
-            val_losses.append(loss)
-        return np.mean(val_losses)
+            loss_list = self._model(imgs, targets)
+            # print(len(loss_dict), loss_dict[0].keys(), loss_dict[0])
+            # for loss_dict in loss_list:
+            #     loss = np.sum(loss_dict['scores'].cpu().detach().numpy())
+            self._metric.update(loss_list, targets)
+
+        return self._metric.compute()
 
     def test(self) -> None:
         val_loss = self._test()

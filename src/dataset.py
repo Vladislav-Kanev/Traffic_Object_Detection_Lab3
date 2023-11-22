@@ -42,5 +42,5 @@ class FrameDataset(torch.utils.data.Dataset):
 
 
 def split_dataset(dataset: FrameDataset) -> tuple[FrameDataset, FrameDataset]:
-    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [0.7, 0.3])
+    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [0.9, 0.1])
     return train_dataset, test_dataset
