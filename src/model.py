@@ -1,7 +1,7 @@
 import torchvision
 from torchvision.models.detection.faster_rcnn import (
     FasterRCNN, FasterRCNN_MobileNet_V3_Large_320_FPN_Weights,
-    FastRCNNPredictor)
+    FasterRCNN_MobileNet_V3_Large_FPN_Weights, FastRCNNPredictor)
 
 
 def dfs_freeze(model):
@@ -12,8 +12,12 @@ def dfs_freeze(model):
 
 
 def get_model(num_classes: int) -> FasterRCNN:
-    model = torchvision.models.detection.fasterrcnn_mobilenet_v3_large_320_fpn(
-        weights=FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT
+    # model = torchvision.models.detection.fasterrcnn_mobilenet_v3_large_320_fpn(
+    #     weights=FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT
+    #     )
+
+    model = torchvision.models.detection.fasterrcnn_mobilenet_v3_large_fpn(
+        weights=FasterRCNN_MobileNet_V3_Large_FPN_Weights.DEFAULT
         )
     dfs_freeze(model)
 
