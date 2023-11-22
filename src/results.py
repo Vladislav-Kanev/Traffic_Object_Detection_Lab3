@@ -16,9 +16,9 @@ def prepare_result(results: SubmissionType, result_path: str, index_map : list[i
                 {
                     'id': global_id,
                     'image_id': image_id,
-                    'category_id': category_id.cpu.item(),
-                    'bbox': bbox.cpu.tolist(),
-                    'score': score.cpu.item()
+                    'category_id': category_id.cpu().item(),
+                    'bbox': bbox.cpu().tolist(),
+                    'score': score.cpu().item()
                 }
             )
             global_id += 1
