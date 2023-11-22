@@ -39,7 +39,7 @@ class Trainer:
         for epoch in range(self._num_epochs):
             self._model.train()
             epoch_loss = []
-            for data in tqdm(self._train_dataloader, desc=f'Epoch {epoch}', total=len(self._train_dataloader)):
+            for data in tqdm(self._train_dataloader, desc=f'Epoch {epoch}'):
                 with autocast(self._autocast):
                     imgs, targets = self._prepare_batch(data)
                     loss_dict = self._model(imgs, targets)
@@ -52,21 +52,23 @@ class Trainer:
                 loss.backward()
                 self._optimizer.step()
                 self._scheduler.step()
-            val_map = self._test()
-            print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}, mAP {val_map}')
+            map_value = self._test()
+            print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss)}, mAP {map_value}')
 
     @torch.inference_mode()
     def _test(self) -> float:
         self._model.eval()
-        for data in self._test_dataloader:
+        for data in tqdm(self._test_dataloader, desc='Test'):
             imgs, targets = self._prepare_batch(data)
             loss_list = self._model(imgs, targets)
             self._metric.update(loss_list, targets)
-        return self._metric.compute()
+        metric_result = self._metric.compute()
+        map_value: torch.Tensor = metric_result['map'].item()
+        return map_value
 
     def test(self) -> None:
-        val_map = self._test()
-        print(f'Validation: mAP {val_map}')
+        map_value = self._test()
+        print(f'Validation: mAP {map_value}')
 
     def _prepare_batch(self, data: list[list[torch.Tensor]]
     ) -> tuple[list[str, torch.Tensor], list[dict[str, torch.Tensor]]]:
@@ -83,7 +85,7 @@ class Trainer:
     @torch.inference_mode()
     def eval(self) -> SubmissionType:
         self._model.eval()
-        for data in self._val_dataloader:
+        for data in tqdm(self._val_dataloader, desc='Validation'):
             imgs = []
             for d in data:
                 imgs.append(d[0].to(self._device))
