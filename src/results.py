@@ -14,7 +14,7 @@ def prepare_result(results: SubmissionType, result_path: str, index_map : list[i
                                             sample_result['scores']):
             submission_result.append(
                 {
-                    'id': global_id,
+                    'ID': global_id,
                     'image_id': image_id,
                     'category_id': category_id.cpu().item(),
                     'bbox': bbox.cpu().tolist(),
