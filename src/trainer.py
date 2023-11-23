@@ -24,7 +24,6 @@ class Trainer:
         self._test_dataloader = test_dataloader
         self._val_dataloader = val_dataloader
         self._optimizer = optimizer
-        # self._scheduler = scheduler
         self._num_epochs = num_epochs
         self._device = device
         self._metric = MeanAveragePrecision(iou_type="bbox")
@@ -51,7 +50,6 @@ class Trainer:
                 self._optimizer.zero_grad()
                 loss.backward()
                 self._optimizer.step()
-                # self._scheduler.step()
             map_value = self._test()
             print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss): .2f}, mAP {map_value: .2f}')
 
