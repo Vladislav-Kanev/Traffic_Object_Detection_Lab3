@@ -4,11 +4,11 @@ from torchvision.models.detection.faster_rcnn import (
     FastRCNNPredictor)
 
 
-def dfs_freeze(model):
-    for _, child in model.named_children():
-        for param in child.parameters():
-            param.requires_grad = False
-        dfs_freeze(child)
+# def dfs_freeze(model):
+#     for _, child in model.named_children():
+#         for param in child.parameters():
+#             param.requires_grad = False
+#         dfs_freeze(child)
 
 
 def get_model(num_classes: int) -> FasterRCNN:
@@ -16,7 +16,7 @@ def get_model(num_classes: int) -> FasterRCNN:
         weights=FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT
         )
 
-    dfs_freeze(model)
+    # dfs_freeze(model)
 
     in_featured = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_featured, num_classes)

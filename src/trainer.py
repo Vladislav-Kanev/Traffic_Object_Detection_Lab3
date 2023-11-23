@@ -17,14 +17,14 @@ class Trainer:
     def __init__(self,
                  model: FasterRCNN,
                  train_dataloader: DataLoader, test_dataloader: DataLoader, val_dataloader: DataLoader,
-                 optimizer: Optimizer, scheduler: LRScheduler, num_epochs: int, device: torch.device,
+                 optimizer: Optimizer, num_epochs: int, device: torch.device,
                  autocast: bool) -> None:
         self._model = model
         self._train_dataloader = train_dataloader
         self._test_dataloader = test_dataloader
         self._val_dataloader = val_dataloader
         self._optimizer = optimizer
-        self._scheduler = scheduler
+        # self._scheduler = scheduler
         self._num_epochs = num_epochs
         self._device = device
         self._metric = MeanAveragePrecision(iou_type="bbox")
@@ -51,7 +51,7 @@ class Trainer:
                 self._optimizer.zero_grad()
                 loss.backward()
                 self._optimizer.step()
-                self._scheduler.step()
+                # self._scheduler.step()
             map_value = self._test()
             print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss): .2f}, mAP {map_value: .2f}')
 
