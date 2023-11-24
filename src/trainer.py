@@ -35,7 +35,7 @@ class Trainer:
     @property
     def model(self) -> FasterRCNN:
         return self._model
-    
+
     @property
     def num_epochs(self) -> int:
         return self._num_epochs
@@ -44,7 +44,7 @@ class Trainer:
     def num_epochs(self, num_epochs: int) -> None:
         self._num_epochs = num_epochs
 
-    def train(self) -> None: 
+    def train(self) -> None:
         for epoch in range(self._num_epochs):
             self._model.train()
             epoch_loss = []
