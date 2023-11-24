@@ -48,6 +48,7 @@ class Trainer:
             self._model.train()
             epoch_loss = []
             for data in tqdm(self._train_dataloader, desc=f'Epoch {epoch}'):
+                self._optimizer.zero_grad()
                 with autocast(self._autocast):
                     imgs, targets = self._prepare_batch(data)
                     loss_dict = self._model(imgs, targets)
@@ -56,7 +57,6 @@ class Trainer:
                 iteration_loss = loss.cpu().detach().numpy()
                 epoch_loss.append(iteration_loss)
 
-                self._optimizer.zero_grad()
                 loss.backward()
                 self._optimizer.step()
                 if self._scheduler is not None:
