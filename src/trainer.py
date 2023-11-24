@@ -18,7 +18,8 @@ class Trainer:
                  model: FasterRCNN,
                  train_dataloader: DataLoader, test_dataloader: DataLoader, val_dataloader: DataLoader,
                  optimizer: Optimizer, scheduler: LRScheduler,  num_epochs: int, device: torch.device,
-                 autocast: bool) -> None:
+                 autocast: bool, gradient_accumulation_steps: int = 1
+                 ) -> None:
         self._model = model
         self._train_dataloader = train_dataloader
         self._test_dataloader = test_dataloader
@@ -29,6 +30,7 @@ class Trainer:
         self._device = device
         self._metric = MeanAveragePrecision(iou_type="bbox")
         self._autocast = autocast
+        self._gradient_accumulation_steps = gradient_accumulation_steps
 
     @property
     def model(self) -> FasterRCNN:
@@ -42,15 +44,13 @@ class Trainer:
     def num_epochs(self, num_epochs: int) -> None:
         self._num_epochs = num_epochs
 
-    def train(self) -> None:
-        
+    def train(self) -> None: 
         for epoch in range(self._num_epochs):
             self._model.train()
             epoch_loss = []
-            for data in tqdm(self._train_dataloader, desc=f'Epoch {epoch}'):
-                self._optimizer.zero_grad()
+            for batch_id, batch in enumerate(tqdm(self._train_dataloader, desc=f'Epoch {epoch}')):
                 with autocast(self._autocast):
-                    imgs, targets = self._prepare_batch(data)
+                    imgs, targets = self._prepare_batch(batch)
                     loss_dict = self._model(imgs, targets)
                 loss = sum(v for v in loss_dict.values())
 
@@ -58,7 +58,9 @@ class Trainer:
                 epoch_loss.append(iteration_loss)
 
                 loss.backward()
-                self._optimizer.step()
+                if batch_id % self._gradient_accumulation_steps == 0 or batch_id + 1 == len(self._train_dataloader):
+                    self._optimizer.step()
+                    self._optimizer.zero_grad()
                 if self._scheduler is not None:
                     self._scheduler.step()
 
@@ -68,8 +70,8 @@ class Trainer:
     @torch.inference_mode()
     def _test(self) -> float:
         self._model.eval()
-        for data in tqdm(self._test_dataloader, desc='Test'):
-            imgs, targets = self._prepare_batch(data)
+        for batch in tqdm(self._test_dataloader, desc='Test'):
+            imgs, targets = self._prepare_batch(batch)
             loss_list = self._model(imgs, targets)
             self._metric.update(loss_list, targets)
         metric_result = self._metric.compute()
@@ -80,11 +82,11 @@ class Trainer:
         map_value = self._test()
         print(f'Validation: mAP {map_value: .2f}')
 
-    def _prepare_batch(self, data: list[list[torch.Tensor]]
+    def _prepare_batch(self, batch: list[list[torch.Tensor]]
     ) -> tuple[list[str, torch.Tensor], list[dict[str, torch.Tensor]]]:
         imgs = []
         targets = []
-        for d in data:
+        for d in batch:
             imgs.append(d[0].to(self._device))
             targ = {}
             targ['boxes'] = d[1]['boxes'].to(self._device)
