@@ -2,13 +2,14 @@ import json
 from typing import Optional
 
 import pandas as pd
+import numpy as np
 import torch
 from PIL import Image
 from torchvision.io import read_image
 from torchvision import transforms as T
-# from torchvision.transforms import Compose
 from albumentations import Compose
-import numpy as np
+
+from .normalization import local_contrast_normalization, local_response_norm
 
 
 def get_pandas_dataset(dataset_path: str, val: bool = False) -> tuple[pd.DataFrame, dict[str, list[dict[str, str]]]]:
@@ -34,16 +35,17 @@ def get_pandas_dataset(dataset_path: str, val: bool = False) -> tuple[pd.DataFra
 
 
 class FrameDataset(torch.utils.data.Dataset):
-    def __init__(self, dataset: pd.DataFrame, imageBasePath: str, val: bool = False, transforms: Optional[Compose] = None) -> None:
+    def __init__(self, dataset: pd.DataFrame, imageBasePath: str, val: bool = False, transforms: Optional[Compose] = None, normalization: str = None) -> None:
         self._dataset = dataset
         self._transforms = transforms
         self._imageBasePath = imageBasePath
         self._val = val
+        self._normalization = normalization
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         image_name = self._dataset['file_name'][idx]
-        image = Image.open(self._imageBasePath + image_name)
-        # image = read_image(self._imageBasePath + image_name)
+        # image = Image.open(self._imageBasePath + image_name)
+        image = read_image(self._imageBasePath + image_name)
 
         target = {}
         if not self._val:
@@ -55,15 +57,19 @@ class FrameDataset(torch.utils.data.Dataset):
             target['area'] = torch.as_tensor(self._dataset['area'][idx])
             target['iscrowd'] = torch.as_tensor(self._dataset['iscrowd'][idx])
 
+        if self._normalization == 'local_contrast_normalization':
+            image = local_contrast_normalization(image=image)
+        elif self._normalization == 'local_response_norm':
+            image = local_response_norm(image=image)
+
         if self._transforms is not None:
             # print("iteration started", target['image_id'])
-            transformed_image = self._transforms(image=np.array(
-                image), bboxes=target['boxes'], category_ids=target['labels'])
+            transformed_image = self._transforms(image=np.array(T.ToPILImage()(image)), bboxes=target['boxes'], category_ids=target['labels'])
             # print("iteration completed")
-            image = transformed_image['image']
+            image = T.ToTensor()(transformed_image['image'])
             target['boxes'] = torch.as_tensor(transformed_image['bboxes'])
 
-        return T.ToTensor()(image), target
+        return image, target
 
     def __len__(self) -> int:
         return len(self._dataset)
