@@ -58,11 +58,11 @@ class Trainer:
                 epoch_loss.append(iteration_loss)
 
                 loss.backward()
-                if batch_id % self._gradient_accumulation_steps == 0 or batch_id + 1 == len(self._train_dataloader):
+                if batch_id + 1 % self._gradient_accumulation_steps == 0 or batch_id + 1 == len(self._train_dataloader):
                     self._optimizer.step()
                     self._optimizer.zero_grad()
-                if self._scheduler is not None:
-                    self._scheduler.step()
+                    if self._scheduler is not None:
+                        self._scheduler.step()
 
             map_value = self._test()
             print(f'Epoch {epoch}: train_loss {np.mean(epoch_loss): .2f}, mAP {map_value: .2f}')

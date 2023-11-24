@@ -4,11 +4,11 @@ from torchvision.models.detection.faster_rcnn import (
     FastRCNNPredictor)
 
 
-# def dfs_freeze(model):
-#     for _, child in model.named_children():
-#         for param in child.parameters():
-#             param.requires_grad = False
-#         dfs_freeze(child)
+def dfs_freeze(model):
+    for _, child in model.named_children():
+        for param in child.parameters():
+            param.requires_grad = False
+        dfs_freeze(child)
 
 
 def get_model(num_classes: int) -> FasterRCNN:
