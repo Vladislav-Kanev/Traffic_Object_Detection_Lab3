@@ -1,13 +1,12 @@
 import json
 from typing import Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import torch
-from PIL import Image
-from torchvision.io import read_image
-from torchvision import transforms as T
 from albumentations import Compose
+from torchvision import transforms as T
+from torchvision.io import read_image
 
 from .normalization import local_contrast_normalization, local_response_norm
 
@@ -44,7 +43,6 @@ class FrameDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         image_name = self._dataset['file_name'][idx]
-        # image = Image.open(self._imageBasePath + image_name)
         image = read_image(self._imageBasePath + image_name)
 
         target = {}
@@ -63,9 +61,9 @@ class FrameDataset(torch.utils.data.Dataset):
             image = local_response_norm(image=image)
 
         if self._transforms is not None:
-            # print("iteration started", target['image_id'])
-            transformed_image = self._transforms(image=np.array(T.ToPILImage()(image)), bboxes=target['boxes'], category_ids=target['labels'])
-            # print("iteration completed")
+            transformed_image = self._transforms(image=np.array(T.ToPILImage()(image)),
+                                                 bboxes=target['boxes'],
+                                                 category_ids=target['labels'])
             image = T.ToTensor()(transformed_image['image'])
             target['boxes'] = torch.as_tensor(transformed_image['bboxes'])
 
@@ -76,6 +74,5 @@ class FrameDataset(torch.utils.data.Dataset):
 
 
 def split_dataset(dataset: FrameDataset) -> tuple[FrameDataset, FrameDataset]:
-    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [
-                                                                0.9, 0.1])
+    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [0.9, 0.1])
     return train_dataset, test_dataset
