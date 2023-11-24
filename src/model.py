@@ -16,7 +16,7 @@ def get_model(num_classes: int) -> FasterRCNN:
         weights=FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT
         )
 
-    dfs_freeze(model)
+    # dfs_freeze(model)
 
     in_featured = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_featured, num_classes)
