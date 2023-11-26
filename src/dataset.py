@@ -7,6 +7,10 @@ from PIL import Image
 from torchvision import transforms as T
 from torchvision.transforms import Compose
 
+from src.yolo_helper import coco_to_yolo
+
+IMAGE_HEIGHT = 512
+IMAGE_WIDTH = 512
 
 def get_pandas_dataset(dataset_path: str, val: bool = False) -> tuple[pd.DataFrame, dict[str, list[dict[str, str]]]]:
     data_json = json.load(open(dataset_path))
@@ -16,7 +20,7 @@ def get_pandas_dataset(dataset_path: str, val: bool = False) -> tuple[pd.DataFra
         data = pd.DataFrame(data_json['annotations'])
         classes = data_json['categories']
 
-        data['bbox'] = [[i[0], i[1], i[0] + i[2], i[1] + i[3]] for i in data.bbox]
+        data['bbox'] = [coco_to_yolo(i[0], i[1], i[2], i[3], IMAGE_HEIGHT, IMAGE_WIDTH) for i in data.bbox]
         data = data.groupby('image_id').agg({'category_id': list, 'bbox': list}).reset_index()
 
         images = dict({i['id']: i['file_name'] for i in data_json['images']})
